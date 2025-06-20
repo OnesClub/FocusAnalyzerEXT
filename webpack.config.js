@@ -3,7 +3,10 @@ const CopyPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  mode: 'development',
+  mode: 'production',
+  optimization: {
+    minimize: false
+  },
   entry: {
     background: './src/background.js',
     content: './src/content.js',

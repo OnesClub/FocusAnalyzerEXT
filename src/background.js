@@ -40,10 +40,21 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 // Activity logging
 async function logActivity(tab) {
+  // Skip if URL is undefined or invalid
+  if (!tab.url || tab.url === '') return;
+
+  // Validate URL before creating activity
+  try {
+    new URL(tab.url); // Test if URL is valid
+  } catch (e) {
+    console.error('Invalid URL:', tab.url);
+    return;
+  }
+
   const activity = {
     timestamp: Date.now(),
     url: tab.url,
-    title: tab.title,
+    title: tab.title || 'Untitled',
     duration: 0 // Will be updated when activity changes
   };
 
@@ -65,17 +76,29 @@ async function analyzePatterns() {
 
   // Group activities by domain
   const domainPatterns = activityLog.reduce((acc, activity) => {
-    const domain = new URL(activity.url).hostname;
-    if (!acc[domain]) {
-      acc[domain] = {
-        totalTime: 0,
-        visitCount: 0,
-        averageVisitDuration: 0
-      };
+    try {
+      if (!activity.url) return acc;
+      
+      const domain = new URL(activity.url).hostname;
+      if (!domain) return acc;
+
+      if (!acc[domain]) {
+        acc[domain] = {
+          totalTime: 0,
+          visitCount: 0,
+          averageVisitDuration: 0
+        };
+      }
+      
+      // Ensure duration is a valid number
+      const duration = typeof activity.duration === 'number' ? activity.duration : 0;
+      
+      acc[domain].totalTime += duration;
+      acc[domain].visitCount++;
+      acc[domain].averageVisitDuration = acc[domain].totalTime / acc[domain].visitCount;
+    } catch (e) {
+      console.error('Error processing activity:', e, activity);
     }
-    acc[domain].totalTime += activity.duration;
-    acc[domain].visitCount++;
-    acc[domain].averageVisitDuration = acc[domain].totalTime / acc[domain].visitCount;
     return acc;
   }, {});
 
@@ -87,27 +110,47 @@ async function analyzePatterns() {
 
 // Intervention system
 async function checkForInterventions(patterns, settings) {
-  const distractionThreshold = settings.distractionThreshold * 60 * 1000; // Convert to milliseconds
+  try {
+    if (!patterns || !settings || !settings.distractionThreshold) {
+      console.error('Invalid patterns or settings data');
+      return;
+    }
 
-  for (const [domain, pattern] of Object.entries(patterns)) {
-    if (pattern.averageVisitDuration > distractionThreshold) {
-      // Notify content script to show intervention
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          type: 'SHOW_INTERVENTION',
-          data: {
-            domain,
-            timeSpent: pattern.averageVisitDuration
+    const distractionThreshold = settings.distractionThreshold * 60 * 1000; // Convert to milliseconds
+
+    for (const [domain, pattern] of Object.entries(patterns)) {
+      try {
+        if (!pattern || typeof pattern.averageVisitDuration !== 'number') continue;
+
+        if (pattern.averageVisitDuration > distractionThreshold) {
+          // Notify content script to show intervention
+          const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tabs[0]) {
+            await chrome.tabs.sendMessage(tabs[0].id, {
+              type: 'SHOW_INTERVENTION',
+              data: {
+                domain,
+                timeSpent: pattern.averageVisitDuration
+              }
+            }).catch(err => console.error('Error sending intervention message:', err));
           }
-        });
+        }
+      } catch (err) {
+        console.error('Error processing pattern for domain:', domain, err);
       }
     }
+  } catch (err) {
+    console.error('Error in checkForInterventions:', err);
   }
 }
 
 // Utility functions
 async function isTrackingEnabled() {
-  const { settings } = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS);
-  return settings.trackingEnabled;
+  try {
+    const { settings } = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS);
+    return settings && typeof settings.trackingEnabled === 'boolean' ? settings.trackingEnabled : DEFAULT_SETTINGS.trackingEnabled;
+  } catch (err) {
+    console.error('Error checking tracking status:', err);
+    return DEFAULT_SETTINGS.trackingEnabled; // Fall back to default setting
+  }
 }
