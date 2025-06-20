@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Analyzer Dashboard</title>
+  <link rel="stylesheet" href="styles/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>Focus Analyzer</h1>
+      </div>
+      <ul class="nav-links">
+        <li class="nav-item active" data-section="overview">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+          </svg>
+          Overview
+        </li>
+        <li class="nav-item" data-section="focus-session">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+            <path fill="currentColor" d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+          </svg>
+          Focus Session
+        </li>
+        <li class="nav-item" data-section="patterns">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+            <path fill="currentColor" d="M7 12h2v5H7zm4-7h2v12h-2zm4 4h2v8h-2z"/>
+          </svg>
+          Patterns
+        </li>
+        <li class="nav-item" data-section="settings">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+          </svg>
+          Settings
+        </li>
+      </ul>
+    </nav>
+
+    <main class="main-content">
+      <section id="overview" class="dashboard-section active">
+        <h2>Focus Overview</h2>
+        <div class="overview-grid">
+          <div class="overview-card">
+            <h3>Today's Focus Score</h3>
+            <div class="chart-container">
+              <canvas id="focusScoreChart"></canvas>
+            </div>
+          </div>
+          <div class="overview-card">
+            <h3>Productive vs Distracted Time</h3>
+            <div class="chart-container">
+              <canvas id="timeDistributionChart"></canvas>
+            </div>
+          </div>
+          <div class="overview-card">
+            <h3>Top Productive Sites</h3>
+            <div id="productiveSites" class="site-list"></div>
+          </div>
+          <div class="overview-card">
+            <h3>Top Distractions</h3>
+            <div id="distractionSites" class="site-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="focus-session" class="dashboard-section">
+        <h2>Focus Session</h2>
+        <div class="focus-session-container">
+          <div class="timer-container">
+            <div class="timer" id="focusTimer">25:00</div>
+            <div class="timer-controls">
+              <button id="startTimer" class="primary-btn">Start</button>
+              <button id="pauseTimer" class="secondary-btn" disabled>Pause</button>
+              <button id="resetTimer" class="secondary-btn">Reset</button>
+            </div>
+          </div>
+          <div class="session-stats">
+            <h3>Session Statistics</h3>
+            <div class="stats-container">
+              <div class="stat-item">
+                <span class="stat-label">Focus Time</span>
+                <span class="stat-value" id="focusTime">0m</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Breaks Taken</span>
+                <span class="stat-value" id="breakCount">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Distractions</span>
+                <span class="stat-value" id="distractionCount">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="patterns" class="dashboard-section">
+        <h2>Usage Patterns</h2>
+        <div class="patterns-grid">
+          <div class="patterns-card">
+            <h3>Daily Activity Pattern</h3>
+            <div class="chart-container">
+              <canvas id="dailyPatternChart"></canvas>
+            </div>
+          </div>
+          <div class="patterns-card">
+            <h3>Weekly Focus Trend</h3>
+            <div class="chart-container">
+              <canvas id="weeklyTrendChart"></canvas>
+            </div>
+          </div>
+          <div class="patterns-card">
+            <h3>Common Distractions</h3>
+            <div class="chart-container">
+              <canvas id="distractionsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="dashboard-section">
+        <h2>Settings</h2>
+        <div class="settings-container">
+          <div class="settings-group">
+            <h3>General Settings</h3>
+            <div class="setting-item">
+              <label for="trackingEnabled">Enable Tracking</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="trackingEnabled">
+                <span class="toggle-slider"></span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <label for="focusGoal">Daily Focus Goal (hours)</label>
+              <input type="number" id="focusGoal" min="1" max="24" value="6">
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Focus Session Settings</h3>
+            <div class="setting-item">
+              <label for="sessionDuration">Session Duration (minutes)</label>
+              <input type="number" id="sessionDuration" min="5" max="120" value="25">
+            </div>
+            <div class="setting-item">
+              <label for="breakDuration">Break Duration (minutes)</label>
+              <input type="number" id="breakDuration" min="1" max="30" value="5">
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Intervention Settings</h3>
+            <div class="setting-item">
+              <label for="interventionLevel">Intervention Level</label>
+              <select id="interventionLevel">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label for="distractionThreshold">Distraction Threshold (minutes)</label>
+              <input type="number" id="distractionThreshold" min="1" max="60" value="15">
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Data Management</h3>
+            <div class="setting-item">
+              <button id="exportData" class="secondary-btn">Export Data</button>
+              <button id="clearData" class="danger-btn">Clear All Data</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="dashboard.js"></script>
+</body>
+</html>
